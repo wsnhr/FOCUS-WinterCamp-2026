@@ -1,0 +1,65 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- 2D LiDAR：Gazebo ray + gazebo_ros_laser 插件 -->
+  <xacro:macro name="lidar2d" params="name parent topic frame *origin">
+
+    <!-- 固定到 parent link 上 -->
+    <joint name="${name}_joint" type="fixed">
+      <xacro:insert_block name="origin"/>
+      <parent link="${parent}"/>
+      <child link="${name}_link"/>
+    </joint>
+
+    <link name="${name}_link">
+      <inertial>
+        <mass value="0.01"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <inertia ixx="1e-5" ixy="0" ixz="0" iyy="1e-5" iyz="0" izz="1e-5"/>
+      </inertial>
+
+      <!-- 可视化占位：小盒子 -->
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><box size="0.04 0.04 0.02"/></geometry>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><box size="0.04 0.04 0.02"/></geometry>
+      </collision>
+    </link>
+
+    <gazebo reference="${name}_link">
+      <sensor name="${name}_sensor" type="ray">
+        <update_rate>15</update_rate>
+
+        <ray>
+          <scan>
+            <horizontal>
+              <!-- 360° 扫描 -->
+              <samples>720</samples>
+              <resolution>1</resolution>
+              <min_angle>-3.14159</min_angle>
+              <max_angle>3.14159</max_angle>
+            </horizontal>
+          </scan>
+
+          <range>
+            <min>0.12</min>
+            <max>6.0</max>
+            <resolution>0.01</resolution>
+          </range>
+        </ray>
+
+        <!-- 输出 sensor_msgs/LaserScan -->
+        <plugin name="${name}_plugin" filename="libgazebo_ros_laser.so">
+          <topicName>${topic}</topicName>
+          <frameName>${frame}</frameName>
+        </plugin>
+
+      </sensor>
+    </gazebo>
+
+  </xacro:macro>
+</robot>
+

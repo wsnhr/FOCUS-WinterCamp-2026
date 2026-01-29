@@ -1,0 +1,43 @@
+# ========== Catkin / ROS build outputs ==========
+ros_ws/build/
+ros_ws/devel/
+ros_ws/install/
+ros_ws/logs/
+
+# ========== Python ==========
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# ========== Editor / OS ==========
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# ========== ROS runtime files ==========
+*.bag
+*.bag.active
+*.bag.orig
+*.log
+
+# ========== Gazebo cache (optional) ==========
+.gazebo/
+
+# ========== Outputs / recordings ==========
+*.mp4
+*.avi
+*.mkv
+*.mov
+outputs/
+data/
+
+# ========== CMake / build artifacts (extra safety) ==========
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+compile_commands.json
