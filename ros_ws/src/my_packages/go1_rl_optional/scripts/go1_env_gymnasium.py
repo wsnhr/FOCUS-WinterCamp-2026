@@ -42,6 +42,12 @@ class Go1LidarAvoidEnv(gym.Env):
         self.w_forward = float(rospy.get_param("~w_forward", 1.0))
         self.w_crash   = float(rospy.get_param("~w_crash", 5.0))
         self.w_smooth  = float(rospy.get_param("~w_smooth", 0.05))
+self.w_turn = float(rospy.get_param("~w_turn", 0.15))      # 转动惩罚
+self.w_spin = float(rospy.get_param("~w_spin", 0.20))      # 低速转圈额外惩罚
+self.spin_v_thresh = float(rospy.get_param("~spin_v_thresh", 0.05))  # 低速阈值
+
+self.safe_dist = float(rospy.get_param("~safe_dist", 0.60)) # 0.6m 内开始扣
+self.w_clear = float(rospy.get_param("~w_clear", 0.30))     # 离障惩罚权重
 
         # Internal
         self._latest = None
@@ -136,10 +142,31 @@ class Go1LidarAvoidEnv(gym.Env):
         terminated = bool(crashed)
         truncated  = bool(self._step_count >= self.max_steps)
 
-        r_forward = self.w_forward * v
-        r_crash   = -self.w_crash if crashed else 0.0
-        r_smooth  = -self.w_smooth * float(np.sum((a - self._prev_action) ** 2))
-        reward = float(r_forward + r_crash + r_smooth)
+        # ---- reward terms ----
+r_forward = self.w_forward * v
+
+# 1) 转动惩罚：抑制持续大角速度转圈
+r_turn = -self.w_turn * abs(w)
+
+# 2) 原地转圈惩罚：v 很小还在转，额外扣
+r_spin = 0.0
+if v < self.spin_v_thresh:
+    r_spin = -self.w_spin * abs(w)
+
+# 3) 离障惩罚：离得越近越扣（在碰撞前就开始有压力）
+# 安全距离以内开始扣分（线性），避免突然撞上才扣
+r_clear = 0.0
+if min_dist < self.safe_dist:
+    r_clear = -self.w_clear * (self.safe_dist - min_dist)
+
+# 4) 碰撞大罚
+r_crash = -self.w_crash if crashed else 0.0
+
+# 5) 平滑（保留）
+r_smooth = -self.w_smooth * float(np.sum((a - self._prev_action) ** 2))
+
+reward = float(r_forward + r_turn + r_spin + r_clear + r_crash + r_smooth)
+
 
         self._prev_action = a
 
